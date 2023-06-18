@@ -1,18 +1,3 @@
-20年试题
-
-4个分析题（50分）
-
-- 给一个序列，计算MESI，Dragon两个cache coherence协议操作的时钟周期并分析。
-- Sequential memory consistency下，给出两个线程不合法的输出并解释。
-- 用LL-SC实现ticket lock。
-- 给了6x6 2D mesh中的源节点和多个目的节点，画出双路径多播算法、多路径多播算法的发送路径。
-
-21年试题
-
-- 考试**开卷**。一定要去西区买个复习资料。别看是0607年的考试题，但是和21年考试题的题型基本一致。
-- 第一大题是让你解释若干英文缩写的含义。西区卖的复习资料上都给你整理好了。
-- 然后是MESI/Dragon协议时间分析、给两个共享变量的线程分析变量最后的可能取值、写最小北最后算法、写双路径/多路径多播路由路径、分析一个容错回滚问题。
-
 # 名词解析
 
 - SIMD: (Single Instruction Multipe Data, 单指令流多数据流并行机,P3) 是一种并行机体系结构，用同一控制器同时控制多个数据单元流动，来提高空间上的并行性。
@@ -71,6 +56,10 @@ $$
 它意味着随着处理器数目的增多，加速比几乎与处理器数成比例的线性增加，串行比例$f$不再是程序的瓶颈，这对并行系统的发展是个非常乐观的结论。
 
 二者看似矛盾，实则是在不同问题假设下的统一，Gustafson中的问题规模增大，实际上是相对于Amdahl负载不变来说，增加了并行负载部分的比例，降低了$f$，因此并不矛盾。
+
+
+
+
 
 ### 3. 请比较描述可扩放性评价中的几种评价标准。P128
 
@@ -140,7 +129,7 @@ $$
 
 在本题中，存在冲突的输入输出对，为$000\to 110$和$110\to 111$。因此该网络不算非阻塞网络。
 
-### 11. 描述立方网络中的自路由算法。
+### 11. 描述立方网络中的自路由算法
 
 解：对于$N=2^n$个节点的n维立方体，令源节点的二进制编码为：$S=S_{n-1}S_{n-2}...S_{1}S_{0}$，令目的节点为$D=d_{n-1}d_{n-2}...d_{1}d_{0}$。
 
@@ -148,7 +137,71 @@ $$
 
 将算法可描述如下：
 
-输入
+输入：待选路的信包在源处理器中。
+
+输出：将源处理器中信包送至目的地。
+
+过程：
+
+```
+for i=1 to n do 
+	r_i = s_{i-1} ⊕ d_{i-1};
+end
+i=1,v=s;
+while i <= n do 
+	if  r_i = 1 then 
+		从当前节点v 选路到节点
+	endif
+	i=i+1;
+end
+```
+
+
+
+##### 超立方体路由算法(超立方体维序路由算法或E-cube算法)
+
+```
+输入： 当前节点的地址Current和目的节点地址Dest
+输出： 选择输出通道Channel
+过程：
+offset = Current ⊕ Dest;
+if offset == 0 then
+	Channel = Internal;
+else
+	Channel =FirstOne(offset); //返回第一个值为1的位
+endif
+```
+
+##### 超立方体最小P-Cube算法(立方网络中的自路由算法) 选这个
+
+``` 
+输入： 当前节点的地址Current和目的节点地址Dest
+输出： 选的择输出通道Channel
+过程：
+E0 ={},E1={};
+for i=0 to n-1 do
+   if digit(Current,i)==0 and digit(Dest,i)==1 then
+   		E0 = E0 + {i};
+   	endif
+   	if digit(Current,i)=1 and digit(Dest,i)==0 then
+   		E1 = E1 + {i};
+   	endif 
+end
+
+if E0 != {} then 
+	Channel = Select(E0);
+endif 
+if E0=={} and E1!={} then 
+	Channel = Select(E1);
+endif 
+if E0=={} and E1=={} then
+	Channel = Internal;
+endif 
+```
+
+
+
+
 
 # 分析题(问答题)
 
@@ -211,6 +264,9 @@ $$
 
 解：我们将读写命中、缺失引起的总线事务、缺失引起的高速缓存块传输分别记为：H、B、T。
 
+> 当然可以选择在一个读或取中overlap掉小的时钟周期，比如BTH只记T，BH只记B。
+>
+
 对于MESI：
 
 序列1： BTH H H H BTH BH H H BTH BH H H； 5B+3T+12H = 582.
@@ -235,7 +291,7 @@ $$
 
 序列5：BTH H BTH H BTH H BTH H BH BH BH BH BH BH BH BH BH;  13B+4T+17H = 1157 
 
-
+分析的话：因为Dragon总是更新所有处理器中的缓存，因此当其他处理器经常使用更新后的数据时，Dragon协议命中次数更多，且用更多的总线事务来取代代价更高缓存块传输动作，以此降低延迟；此外的情况下，MESI更好。
 
 ### 【题型二】顺序一致性存存储模型下的进程输出（存储一致性 P224）
 
@@ -270,8 +326,6 @@ $$000111, 001011, 001111, 010111, 011011, 011111, 100111, 101011, 101111, 110111
 其中$*$为通配符，可以为$0$或$1$。
 
  
-
-
 
 【题目二】  在顺序一致性存储模型下，有三个并行执行的进程：
 
@@ -314,6 +368,8 @@ P3 7:B=2; 8:A=2; 9: w=C;
 
 
 ### 【题型三】 预取策略考察
+
+P334抄书是11周期，考题出现过12周期，两个对比下。
 
 
 
@@ -410,6 +466,22 @@ P3 7:B=2; 8:A=2; 9: w=C;
    endif 
    ```
 
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
 2. 给出二维网络种的最小北向后算法。
 
    输入：当前节点坐标(Xcurrent, Ycurrent)和目的节点坐标(Xdest, Ydest)
@@ -494,7 +566,68 @@ P3 7:B=2; 8:A=2; 9: w=C;
    Channel = Internal;
    endif
    ```
+
+   单向二维环绕王的维序算法
+
+   输入：当前节点坐标(Xcurrent, Ycurrent)和目的节点坐标(Xdest, Ydest)
+
+   输出：选择输出通道Channel
+
+   过程：
+
+   ```
+   Xoffset = Xdest - Xcurrent;
+   Yoffset = Ydest - Ycurrent;
    
+   if Xoffset <0 then 
+   	Channel = c_{00};
+   endif
+   if Xoffset >0 then
+       Channel = c_{01};
+   endif 
+   if Xoffset ==0 and Yoffset <0 then
+   	Channel = c_{10};
+   endif
+   if Xoffset==0 and Yoffset > 0 then 
+   	Channel == c_{11};
+   endif 
+   if Xoffset==0 and Yoffset ==0 then
+   	Channel = Internal;
+   endif
+   ```
+
+   二维网络中的XY路由算法
+
+   输入：当前节点坐标(Xcurrent, Ycurrent)和目的节点坐标(Xdest, Ydest)
+
+   输出：选择输出通道Channel
+
+   过程：
+
+   ```
+   Xoffset = Xdest - Xcurrent;
+   Yoffset = Ydest - Ycurrent;
+   if Xoffset < 0 then 
+   	Channel=X-;
+   endif 
+   
+   if Xoffset > 0 then
+   	Channel = X+;
+   endif 
+   
+   if Xoffset ==0 and Yoffset < 0 then
+   	Channel = Y-;
+   endif 
+   
+   if Xoffset == 0 and Yoffset > 0 then
+   	Channel = Y+;
+   endif 
+   
+   if Xoffset == 0 and Yoffset ==0 then 
+   	Channel = Internal;
+   endif 
+   ```
+
    
 
 ### 【题型六】LL-SC(锁住读出-条件写入) 实现锁
@@ -518,6 +651,14 @@ lock : ll reg1, location  /*将内存位置的值加载到reg1*/
 unlock: st location, #0  /*写入0 释放锁*/
         ret
 ```
+
+
+
+
+
+
+
+
 
 #### Ticket Lock(20年考题)
 
