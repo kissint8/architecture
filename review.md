@@ -465,7 +465,7 @@ P3 7:B=2; 8:A=2; 9: w=C;
    ```
    Xoffset = Xdest - Xcurrent
    Yoffset = Ydest - Ycurrent
-
+   
    if Xoffset < 0 and Yoffset < 0 then 
    Channel = Select(X-,Y-);
    endif 
