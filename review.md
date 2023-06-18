@@ -478,9 +478,33 @@ unlock: inc reg2   /*now-serving加1*/
 #### Array-based Lock(07年考题)
 
 ```
-
+/*array是锁数组, 初始均置0,为2表示已获取，为1表示锁空闲，下标从1开始*/
+position: mov reg1,#0           /*用reg1表示获取的位置*/
+   start: inc reg1             /*位置加1*/
+          ll reg2, array[reg1] /*先尝试获取0位置*/
+		  cmp reg2,#2 
+		  beqz start            /*该位置被占用则尝试下一个*/
+		  sc location[reg1],#2 /*未占用则尝试占用该位置*/
+		  beqz start           /*若sc失败则向下一个位置尝试*/
+		  ret
+lock: ld reg2, location[reg1] /*不断在该位置忙等*/
+      cmp reg2,#1             
+      bnz lock                /*锁不空闲则继续尝试*/
+      ret 
+unlock: inc reg1				
+		st array[reg1],1     /*将锁空闲信号写入下个位置*/
 ```
 
+#### compare && swap
 
+```
+(来自资料)
+try: ll reg1, location
+bnz reg1, try 
+sub reg3, reg2,reg1
+bnz reg3,try
+sc location,reg4
+beqz reg4,try 
+ret 
+```
 
-(引申 课本还有一种Test and Test&Set Lock)
